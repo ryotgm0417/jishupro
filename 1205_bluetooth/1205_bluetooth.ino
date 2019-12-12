@@ -26,6 +26,7 @@ void setup() {
 void loop() {
 
   // Bluetooth
+  
   while(hc06.available()>0){
     msg += char(hc06.read());
   }
