@@ -22,5 +22,5 @@ void loop() {
   hc06.write(" In");
   hc06.write(" loop;");
 
-  delay(3000);
+  delay(100);
 }

@@ -8,7 +8,7 @@ port = 1
 sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
 sock.connect((address, port))
 time.sleep(5)
-start = time.time()
+# start = time.time()
 msg = b""
 
 while True:
@@ -17,9 +17,9 @@ while True:
         break
     msg = msg + data
     if data.find(b";") != -1:
-        end = time.time()
+        # end = time.time()
         print(data)
-        print(end - start)
+        # print(end - start)
         msg = b""
 
     time.sleep(0.1)

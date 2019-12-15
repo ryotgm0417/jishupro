@@ -35,21 +35,21 @@ void loop() {
   // put your main code here, to run repeatedly:
 
   // Accelerometer + Gyro
-//  static uint32_t prev_ms = millis();
-//  if ((millis() - prev_ms) > 1000)
-//  {
-//      mpu.update();
-//      mpu.print();
-//
-//      Serial.print("roll  (x-forward (north)) : ");
-//      Serial.println(mpu.getRoll());
-//      Serial.print("pitch (y-right (east))    : ");
-//      Serial.println(mpu.getPitch());
-//      Serial.print("yaw   (z-down (down))     : ");
-//      Serial.println(mpu.getYaw());
-//
-//      prev_ms = millis();
-//  }
+ static uint32_t prev_ms = millis();
+ if ((millis() - prev_ms) > 1000)
+ {
+     mpu.update();
+     mpu.print();
+
+     Serial.print("roll  (x-forward (north)) : ");
+     Serial.println(mpu.getRoll());
+     Serial.print("pitch (y-right (east))    : ");
+     Serial.println(mpu.getPitch());
+     Serial.print("yaw   (z-down (down))     : ");
+     Serial.println(mpu.getYaw());
+
+     prev_ms = millis();
+ }
 
 
   // Switch
@@ -78,7 +78,7 @@ void loop() {
 //  if (touchValue == HIGH) {
 //    Serial.println("touched");
 //  }
-  
+
   // Bluetooth
   while(hc06.available()>0){
     msg += char(hc06.read());
