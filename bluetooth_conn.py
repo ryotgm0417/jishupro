@@ -1,27 +1,26 @@
 import bluetooth
 import time
+import rospy
 
-size = 1024
+size = 128
 address = "98:D3:31:FD:5D:81"
 port = 1
 
 sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
 sock.connect((address, port))
 time.sleep(5)
-# start = time.time()
 msg = b""
+
+rospy.init_node('active_mouse')
+pub = rospy.Publisher('/data')
+
 
 while True:
     data = sock.recv(size)
-    if not data:
-        break
     msg = msg + data
     if data.find(b";") != -1:
-        # end = time.time()
-        print(data)
-        # print(end - start)
-        msg = b""
-
-    time.sleep(0.1)
+         print(msg)
+         msg = b""
+         pub.publish(msg)
 
 sock.close()
