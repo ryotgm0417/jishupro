@@ -34,7 +34,7 @@ void loop() {
   static uint32_t prev_ms = millis();
   float data[] = {0,0,0,0,0,0};
   char datastring[6][8];
-  char message[60]="";
+  char message[60]=" ";
 
   for(int i=0;i<BUF_SIZE;i++){
     mpu.update();
