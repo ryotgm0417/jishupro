@@ -7,6 +7,11 @@ from std_msgs.msg import String
 import string
 import time
 
+# Mouse
+ACC_THRESHOLD = 1.
+SENSITIVITY = 3.
+
+
 def callback(msg):
     global mpu_data, pressed, released
     message = msg.data
@@ -25,16 +30,27 @@ def check_click():
 
 
 def mouse_movement():
-    x, y = gui.position()
+    global v_x, v_y
     acc_x = mpu_data[0]
     acc_y = mpu_data[1]
-    gui.moveTo(x + 10*acc_x, y + 10*acc_y)
+
+    if( acc_x**2 + acc_y**2 < ACC_THRESHOLD ):
+        v_x = 0
+        v_y = 0
+    else:
+        v_x += acc_x * SENSITIVITY
+        v_y -= acc_y * SENSITIVITY
+        x, y = gui.position()
+        gui.moveTo(x + v_x, y + v_y, duration = 0.1)
 
 
 if __name__ == "__main__":
     mpu_data = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # most recent data from accelerometer
     pressed = False
     released = False
+
+    v_x = 0
+    v_y = 0
 
     screenWidth, screenHeight = gui.size()
 
@@ -46,7 +62,6 @@ if __name__ == "__main__":
             print(mpu_data, pressed, released)
             check_click()
             mouse_movement()
-            time.sleep(0.1)
 
     except rospy.ROSInterruptException:
         pass

@@ -7,7 +7,7 @@ SoftwareSerial hc06(7,8);
 
 // Accelerometer
 MPU9250 mpu;
-#define BUF_SIZE 20
+#define BUF_SIZE 100
 
 // Switch
 int flag = 0;
@@ -35,7 +35,7 @@ void loop() {
   float data[] = {0,0,0,0,0,0};
   char datastring[6][8];
   char message[60]=" ";
-
+  
   for(int i=0;i<BUF_SIZE;i++){
     mpu.update();
     data[0] += mpu.getAcc(0)*100 / BUF_SIZE;  // 100 = 1g (gravity)
@@ -54,7 +54,6 @@ void loop() {
 
   strcat(message, ";");
 
-  delay(20);
   //Serial.println(message);
   hc06.write(message);
 
