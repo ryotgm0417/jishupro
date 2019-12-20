@@ -8,8 +8,8 @@ import string
 import time
 
 # Mouse
-ACC_THRESHOLD = 1.
-SENSITIVITY = 3.
+ACC_THRESHOLD = 2.
+SENSITIVITY = 1.
 
 
 def callback(msg):
