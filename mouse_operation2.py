@@ -8,12 +8,15 @@ import string
 import time
 
 # Mouse
-ACC_THRESHOLD = 2.
-SENSITIVITY = 1.
+ROLL_OFFSET = -3
+PITCH_OFFSET = 2
+X_SENS = 2
+Y_SENS = 2
+RP_THRESHOLD = 20
 
 
 def callback(msg):
-    global mpu_data, pressed, released
+    global mpu_data, prev_data, pressed, released
     message = msg.data
     pressed = "P" in message    # True when switch is pressed
     released = "R" in message   # True when switch is released
@@ -21,6 +24,7 @@ def callback(msg):
     for ele in message.split(';'):
         ele = ele.split(',')
         if(len(ele) == 7):
+            prev_data = mpu_data
             mpu_data = [float(x) for x in ele[:-1]]
 
 
@@ -30,38 +34,34 @@ def check_click():
 
 
 def mouse_movement():
-    global v_x, v_y
-    acc_x = mpu_data[0]
-    acc_y = mpu_data[1]
+    roll = mpu_data[3] + ROLL_OFFSET
+    pitch = mpu_data[4] + PITCH_OFFSET
 
-    if acc_x**2 + acc_y**2 < ACC_THRESHOLD:
-        v_x = 0
-        v_y = 0
-    else:
-        v_x += acc_x * SENSITIVITY
-        v_y -= acc_y * SENSITIVITY
+    if roll**2 + pitch**2 > RP_THRESHOLD:
         x, y = gui.position()
-        gui.moveTo(x + v_x, y + v_y, duration = 0.1)
+        gui.moveTo(x-X_SENS*roll, y+Y_SENS*pitch, duration=0.1)
+    else:
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":
     mpu_data = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # most recent data from accelerometer
+    prev_data = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     pressed = False
     released = False
 
-    v_x = 0
-    v_y = 0
-
     screenWidth, screenHeight = gui.size()
+    gui.moveTo(screenWidth / 2, screenHeight / 2)
 
     rospy.init_node('mouse_operation')
     rospy.Subscriber('sensor_data', String, callback)
 
     try:
         while not rospy.is_shutdown():
-            print(mpu_data, pressed, released)
-            check_click()
-            mouse_movement()
+            if prev_data != mpu_data:
+                print(mpu_data, pressed, released)
+                check_click()
+                mouse_movement()
 
     except rospy.ROSInterruptException:
         pass
