@@ -8,13 +8,15 @@ import string
 import time
 
 # Mouse
-ROLL_OFFSET = 3
-PITCH_OFFSET = -2
+ROLL_OFFSET = 3.5
+PITCH_OFFSET = -2.3
 X_SENS = 2
 Y_SENS = 2
-RP_THRESHOLD = 20
-SHAKE_THRESHOLD = 200
+RP_THRESHOLD = 30
+SHAKE_THRESHOLD = 150
 
+# if False, disables fail-safe
+gui.FAILSAFE = True
 
 def callback(msg):
     global mpu_data, prev_data, pressed, released
@@ -44,9 +46,9 @@ def mouse_movement():
 
     if roll**2 + pitch**2 > RP_THRESHOLD:
         x, y = gui.position()
-        gui.moveTo(x-X_SENS*roll, y+Y_SENS*pitch, duration=0.1)
+        gui.moveTo(x-X_SENS*roll, y+Y_SENS*pitch, duration=0.08)
     else:
-        time.sleep(0.1)
+        time.sleep(0.08)
 
 
 if __name__ == "__main__":
