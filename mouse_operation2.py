@@ -13,6 +13,7 @@ PITCH_OFFSET = -2
 X_SENS = 2
 Y_SENS = 2
 RP_THRESHOLD = 20
+SHAKE_THRESHOLD = 200
 
 
 def callback(msg):
@@ -33,6 +34,11 @@ def check_click():
 
 
 def mouse_movement():
+    if (mpu_data[0]**2 + mpu_data[1]**2 + mpu_data[2]**2)**0.5 > SHAKE_THRESHOLD:
+        gui.moveTo(screenWidth/2, screenHeight/2)
+        time.sleep(1)
+        return 0
+
     roll = mpu_data[3] - ROLL_OFFSET
     pitch = mpu_data[4] - PITCH_OFFSET
 

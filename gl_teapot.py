@@ -5,7 +5,7 @@ import rospy
 from std_msgs.msg import String
 import string
 import time
-from math import *
+import math
 import numpy as np
 
 import OpenGL
@@ -15,8 +15,8 @@ from OpenGL.GLUT import *
 
 
 # Gyro
-ROLL_OFFSET = 3.3
-PITCH_OFFSET = -1.6
+ROLL_OFFSET = 3.4
+PITCH_OFFSET = -1.9
 YAW_OFFSET = 0.3
 INTERVAL = 0.1
 
@@ -27,6 +27,8 @@ mat_default_color = [1.0, 1.0, 1.0, 1.0]
 mat_default_specular = [1.0, 1.0, 1.0, 1.0]
 mat_default_shininess = [100.0]
 mat_default_emission = [0.0, 0.0, 0.0, 0.0]
+
+size = 0.5
 
 
 def callback(msg):
@@ -41,39 +43,33 @@ def callback(msg):
             mpu_data = [float(x) for x in ele[:-1]]
 
 
-def avoid_zero(x):
-    eps = 0.00001
-    if abs(x) < eps:
-        return eps
-    else:
-        return x
-
-
 def calculate_angles(dt=INTERVAL):
     global angles
-    # angles[0] = atan( mpu_data[0] / (mpu_data[1]**2 + mpu_data[2]**2)**0.5 )
-    # angles[1] = atan( mpu_data[1] / (mpu_data[0]**2 + mpu_data[2]**2)**0.5 )
-    # angles[2] = atan( (mpu_data[0]**2 + mpu_data[1]**2)**0.5 / mpu_data[2] )
-    #
-    # angles[0] = atan(mpu_data[0] / avoid_zero(mpu_data[1]))
-    # angles[1] = acos(mpu_data[2] / (mpu_data[0]**2 + mpu_data[1]**2 + mpu_data[2]**2)**0.5)
-    # for i in range(2):
-    #     angles[i] = angles[i]*180/PI
 
     if pressed:
         angles = np.zeros(3)
     else:
         d_rpy = np.array([mpu_data[3] - ROLL_OFFSET,
-                          -(mpu_data[5] - YAW_OFFSET),
-                          -(mpu_data[4] - PITCH_OFFSET)])*dt
+                          -(mpu_data[4] - PITCH_OFFSET),
+                          -(mpu_data[5] - YAW_OFFSET)])*dt
         s = np.sin(angles*np.pi/180.)
         c = np.cos(angles*np.pi/180.)
         t = np.tan(angles*np.pi/180.)
-        Q = np.array([[1, s[0]*t[1], c[0]*t[1]],
-                      [0, c[0], -s[0]],
-                      [0, s[0]/c[1], c[0]/c[1]]])
+        Q = np.array([[1, c[0]*t[2], s[0]*t[2]],
+                      [0, c[0]/c[2], s[0]/c[2]],
+                      [0, -s[0], c[0]]])
 
         angles = angles + np.matmul(Q,d_rpy)
+
+        # スイッチが上を向いている時は mpu_data[1], mpu_data[2] の値が小さくなるため angles[0] を正確に計算できない。
+        angles[0] = math.atan2(mpu_data[1], mpu_data[2])*180/np.pi
+        angles[1] = math.atan2(mpu_data[0], (mpu_data[1]**2 + mpu_data[2]**2)**0.5)*180/np.pi
+
+    for i in range(3):
+        if angles[i] > 360:
+            angles[i] -= 360
+        elif angles[i] < -360:
+            angles[i] += 360
 
 
 def display():
@@ -85,12 +81,12 @@ def display():
 
     color = [1.0, 0.0, 1.0, 1.0]
     glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
-    glTranslatef(0,0,0)
+    glRotatef(angles[2], 0., 1., 0.)
+    glRotatef(angles[1], 0., 0., -1.)
     glRotatef(angles[0], 1., 0., 0.)
-    glRotatef(angles[1], 0., 1., 0.)
-    glRotatef(angles[2], 0., 0., -1.)
 
-    glutSolidTeapot(0.5)
+
+    glutSolidTeapot(size)
 
     glPopMatrix()
     glutSwapBuffers()
@@ -133,6 +129,9 @@ if __name__ == "__main__":
     try:
         while not rospy.is_shutdown():
             if prev_data != mpu_data:
+                # acc_abs = (mpu_data[0]**2 + mpu_data[1]**2 + mpu_data[2]**2)**0.5
+                # print(mpu_data[1], acc_abs)
+
                 for i in range(4):
                     calculate_angles(INTERVAL/4.)
                     print(angles)
