@@ -5,14 +5,20 @@ import rospy
 from std_msgs.msg import String
 import string
 import time
-import math
+from math import *
+import numpy as np
 
 import OpenGL
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
-PI = 3.1415926536
+
+# Gyro
+ROLL_OFFSET = 3.3
+PITCH_OFFSET = -1.6
+YAW_OFFSET = 0.3
+INTERVAL = 0.1
 
 light_position = [1.0, 1.0, 1.0, 0.0]
 light_ambient = [0.4, 0.4, 0.4, 1.0]
@@ -31,16 +37,43 @@ def callback(msg):
     message = message.translate(string.maketrans('',''), ' PR')  # removes characters {space, R, P} from string
     for ele in message.split(';'):
         ele = ele.split(',')
-        if(len(ele) == 7):
-            prev_data = mpu_data
+        if len(ele) == 7:
             mpu_data = [float(x) for x in ele[:-1]]
 
 
-def calculate_angles():
+def avoid_zero(x):
+    eps = 0.00001
+    if abs(x) < eps:
+        return eps
+    else:
+        return x
+
+
+def calculate_angles(dt=INTERVAL):
     global angles
-    angles[0] = math.atan( mpu_data[0] / (mpu_data[1]**2 + mpu_data[2]**2)**0.5 )
-    angles[1] = math.atan( mpu_data[1] / (mpu_data[0]**2 + mpu_data[2]**2)**0.5 )
-    angles[2] = math.atan( (mpu_data[0]**2 + mpu_data[1]**2)**0.5 / mpu_data[2] )
+    # angles[0] = atan( mpu_data[0] / (mpu_data[1]**2 + mpu_data[2]**2)**0.5 )
+    # angles[1] = atan( mpu_data[1] / (mpu_data[0]**2 + mpu_data[2]**2)**0.5 )
+    # angles[2] = atan( (mpu_data[0]**2 + mpu_data[1]**2)**0.5 / mpu_data[2] )
+    #
+    # angles[0] = atan(mpu_data[0] / avoid_zero(mpu_data[1]))
+    # angles[1] = acos(mpu_data[2] / (mpu_data[0]**2 + mpu_data[1]**2 + mpu_data[2]**2)**0.5)
+    # for i in range(2):
+    #     angles[i] = angles[i]*180/PI
+
+    if pressed:
+        angles = np.zeros(3)
+    else:
+        d_rpy = np.array([mpu_data[3] - ROLL_OFFSET,
+                          -(mpu_data[5] - YAW_OFFSET),
+                          -(mpu_data[4] - PITCH_OFFSET)])*dt
+        s = np.sin(angles*np.pi/180.)
+        c = np.cos(angles*np.pi/180.)
+        t = np.tan(angles*np.pi/180.)
+        Q = np.array([[1, s[0]*t[1], c[0]*t[1]],
+                      [0, c[0], -s[0]],
+                      [0, s[0]/c[1], c[0]/c[1]]])
+
+        angles = angles + np.matmul(Q,d_rpy)
 
 
 def display():
@@ -52,9 +85,11 @@ def display():
 
     color = [1.0, 0.0, 1.0, 1.0]
     glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
-    glRotatef(angles[0]*180/PI, 1., 0., 0.)
-    glRotatef(angles[1]*180/PI, 0., 1., 0.)
-    glRotatef(angles[2]*180/PI, 0., 0., 1.)
+    glTranslatef(0,0,0)
+    glRotatef(angles[0], 1., 0., 0.)
+    glRotatef(angles[1], 0., 1., 0.)
+    glRotatef(angles[2], 0., 0., -1.)
+
     glutSolidTeapot(0.5)
 
     glPopMatrix()
@@ -67,7 +102,7 @@ if __name__ == "__main__":
     pressed = False
     released = False
 
-    angles = [0.0, 0.0, 0.0]
+    angles = np.zeros(3)
 
     rospy.init_node('mouse_operation')
     rospy.Subscriber('sensor_data', String, callback)
@@ -98,12 +133,15 @@ if __name__ == "__main__":
     try:
         while not rospy.is_shutdown():
             if prev_data != mpu_data:
-                print(mpu_data, pressed, released)
-                calculate_angles()
+                for i in range(4):
+                    calculate_angles(INTERVAL/4.)
+                    print(angles)
 
-                #### GL loop, draw object ####
-                glutPostRedisplay()
-                glutMainLoopEvent()
+                    #### GL loop, draw object ####
+                    glutPostRedisplay()
+                    glutMainLoopEvent()
+
+                prev_data = mpu_data
 
 
     except rospy.ROSInterruptException:

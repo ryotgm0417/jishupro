@@ -8,8 +8,8 @@ import string
 import time
 
 # Mouse
-ROLL_OFFSET = -3
-PITCH_OFFSET = 2
+ROLL_OFFSET = 3
+PITCH_OFFSET = -2
 X_SENS = 2
 Y_SENS = 2
 RP_THRESHOLD = 20
@@ -24,18 +24,17 @@ def callback(msg):
     for ele in message.split(';'):
         ele = ele.split(',')
         if(len(ele) == 7):
-            prev_data = mpu_data
             mpu_data = [float(x) for x in ele[:-1]]
 
 
 def check_click():
-    if(pressed == True):
+    if pressed == True:
         gui.click()
 
 
 def mouse_movement():
-    roll = mpu_data[3] + ROLL_OFFSET
-    pitch = mpu_data[4] + PITCH_OFFSET
+    roll = mpu_data[3] - ROLL_OFFSET
+    pitch = mpu_data[4] - PITCH_OFFSET
 
     if roll**2 + pitch**2 > RP_THRESHOLD:
         x, y = gui.position()
@@ -62,6 +61,7 @@ if __name__ == "__main__":
                 print(mpu_data, pressed, released)
                 check_click()
                 mouse_movement()
+                prev_data = mpu_data
 
     except rospy.ROSInterruptException:
         pass
