@@ -8,15 +8,15 @@ import string
 import time
 
 # Mouse
-ROLL_OFFSET = 3.5
-PITCH_OFFSET = -2.3
+ROLL_OFFSET = 3.2
+PITCH_OFFSET = -1.7
 X_SENS = 2
 Y_SENS = 2
 RP_THRESHOLD = 30
 SHAKE_THRESHOLD = 150
 
 # if False, disables fail-safe
-gui.FAILSAFE = True
+gui.FAILSAFE = False
 
 def callback(msg):
     global mpu_data, prev_data, pressed, released

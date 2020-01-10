@@ -15,8 +15,8 @@ from OpenGL.GLUT import *
 
 
 # Gyro
-ROLL_OFFSET = 3.4
-PITCH_OFFSET = -1.9
+ROLL_OFFSET = 3.2
+PITCH_OFFSET = -1.7
 YAW_OFFSET = 0.3
 INTERVAL = 0.1
 
